@@ -79,9 +79,17 @@ def split_dataset(dataset):
     dataset = dataset["train"]
     class_labels = ClassLabel(names=["neutral", "positive", "negative"])
     dataset = dataset.cast_column("label", class_labels)
-    splitted_dataset = dataset.train_test_split(test_size=0.2, stratify_by_column="label", seed=42)
 
-    print(f"\nDataset splitted into train and test sets with 80% and 20% of the data respectively.")
+    # Шаг 1: берём только половину датасета (стратифицированно)
+    halved = dataset.train_test_split(test_size=0.5, stratify_by_column="label", seed=42)
+    reduced_dataset = halved["train"]  # используем только одну половину
+
+    # Шаг 2: делим эту половину на train/test 80/20
+    splitted_dataset = reduced_dataset.train_test_split(test_size=0.2, stratify_by_column="label", seed=42)
+
+    print(f"\nUsed half of the original dataset: {len(reduced_dataset)} rows")
+    print(f"Split into train/test 80/20:")
     print(f"Number of rows in train set: {len(splitted_dataset['train'])}")
     print(f"Number of rows in test set: {len(splitted_dataset['test'])}")
-    splitted_dataset.save_to_disk("../data/sentiment_dataset")
+
+    splitted_dataset.push_to_hub("angryelizar/sentiment_dataset_splitted_short")
